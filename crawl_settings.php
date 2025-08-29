@@ -1,4 +1,4 @@
-<?php $crawl_ophim_settings = json_decode(get_option(CRAWL_OPHIM_OPTION_SETTINGS, [])); ?>
+<?php $crawl_ophim_settings = json_decode((string) get_option(CRAWL_OPHIM_OPTION_SETTINGS, '{}')); ?>
 <div class="filter_title"><strong>Bỏ qua định dạng</strong></div>
 <div class="filter_item">
     <label><input type="checkbox" class="" name="filter_type[]" value="single"> Phim lẻ</label>

@@ -129,14 +129,13 @@ function crawl_tools()
 										$schedule_data = @json_decode(@file_get_contents(CRAWL_OPHIM_PATH_SCHEDULE_JSON), true) ?: [];
 										?>
 										<input type="radio" class="wppd-ui-toggle" name="crawl_ophim_radio" value="nguonc"
-											<?= !empty($schedule_data['enable_nguonc']) ? 'checked' : '' ?>> KKPhim
+											<?= !empty($schedule_data['enable_nguonc']) ? 'checked' : '' ?>> Nguonc
 									</label>
 									<label>
-										$schedule_data = @json_decode(@file_get_contents(CRAWL_OPHIM_PATH_SCHEDULE_JSON), true) ?:
-										[];
-										?>
+										<?php
+										$schedule_data = @json_decode(@file_get_contents(CRAWL_OPHIM_PATH_SCHEDULE_JSON), true) ?: []; ?>
 										<input type="radio" class="wppd-ui-toggle" name="crawl_ophim_radio" value="custome"
-											<?= !empty($schedule_data['enable_custom']) ? 'checked' : '' ?>> KKPhim
+											<?= !empty($schedule_data['enable_custom']) ? 'checked' : '' ?>> Custom
 									</label>
 
 								</div>
@@ -350,7 +349,7 @@ function crawl_tools()
 								<div id="search_movies_nguonc" class="primary">Search</div>
 							</div>
 							<?php
-							// require plugin_dir_path(__FILE__) . '/crawl_settings.php';
+							require plugin_dir_path(__FILE__) . '/crawl_settings.php';
 							?>
 							<div class="crawl_page">
 								Page Crawl: From <input type="number" name="page_from" value="">
