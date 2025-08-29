@@ -760,8 +760,8 @@ function crawl_ophim_movies_handle_nguonc($url, $ophim_update_time, $filterType,
 			'schedule_code' => SCHEDULE_CRAWLER_TYPE_ERROR
 		);
 
-		// return json_encode($result);
-		return "Lỗi";
+		return json_encode($result);
+
 	}
 }
 function crawl_ophim_movies_handle_nguonc_custom($url, $filterType, $filterCategory, $filterCountry)
