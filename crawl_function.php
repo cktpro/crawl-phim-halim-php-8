@@ -75,6 +75,21 @@ function crawl_link_custom()
 }
 function crawl_ophim_custom_list_kkphim($list)
 {
+	$required_fields = ['movie_name', 'img_src', 'list_cate', 'org_title', 'kkphim_url'];
+	foreach ($required_fields as $field) {
+		if (!isset($list[$field])) {
+			$result = array(
+				'status' => false,
+				'post_id' => null,
+				'data' => null,
+				'list_episode' => null,
+				'msg' => "Lỗi: Thiếu trường {$field} trong dữ liệu crawl",
+				'wait' => false,
+				'schedule_code' => SCHEDULE_CRAWLER_TYPE_FILTER
+			);
+			return json_encode($result); // hoặc die("Thiếu dữ liệu: {$field}");
+		}
+	}
 	$title = $list['movie_name'];
 	$thumb = $list['img_src'];
 	$cat = $list['list_cate'];
@@ -84,7 +99,7 @@ function crawl_ophim_custom_list_kkphim($list)
 	$source_url = HALIMHelper::cURL($url);
 	$source_item = json_decode($source_url, true);
 	$id_phim = $source_item['movie']['_id'];
-	$update_time = $source_item['movie']['modified'];
+	$update_time = $source_item['movie']['modified']['time'];
 	try {
 		$args = array(
 			'post_type' => 'post',
@@ -258,20 +273,21 @@ function create_data_kkphim_custom($sourcePage, $url, $ophim_update_time, $title
 		'fetch_ophim_update_time' => $ophim_update_time,
 		'title' => $title,
 		'org_title' => $org_title,
-		'thumbnail' => $thumb,
-		'poster' => $sourcePage["movie"]["poster_url"],
+		'thumbnail' => $sourcePage["movie"]["poster_url"],
+		'poster' => $sourcePage["movie"]["thumb"],
 		'trailer_url' => $sourcePage["movie"]["trailer_url"],
 		'episode' => $sourcePage["movie"]["episode_current"],
 		'total_episode' => $sourcePage["movie"]["episode_total"],
 		'tags' => $arrTags,
 		'content' => preg_replace('/\\r?\\n/s', '', $sourcePage["movie"]["content"]),
-		'actor' => implode(',', $sourcePage["movie"]["actor"]),
-		'director' => implode(',', $sourcePage["movie"]["director"]),
+		'actor' => implode(',', (array) ($sourcePage["movie"]["actor"] ?? [])),
+
+		'director' => implode(',', (array) ($sourcePage["movie"]["director"] ?? [])),
 		'country' => $arrCountry,
 		'cat' => $arrCat,
 		'type' => $type,
 		'lang' => $sourcePage["movie"]["lang"],
-		'showtime' => implode(", ", $showtime),
+		'showtime' => implode(", ", (array) ($showtime ?? [])),
 		'year' => $sourcePage["movie"]["year"],
 		'status' => $sourcePage["movie"]["status"],
 		'duration' => $sourcePage["movie"]["time"],
@@ -634,8 +650,8 @@ function crawl_ophim_movies_handle_nguonc($url, $ophim_update_time, $filterType,
 			)
 		);
 		$wp_query = new WP_Query($args);
-		$total = $wp_query->found_posts;
 
+		$total = $wp_query->found_posts;
 		if ($total > 0) { # Trường hợp đã có
 
 			$args = array(
@@ -705,10 +721,10 @@ function crawl_ophim_movies_handle_nguonc($url, $ophim_update_time, $filterType,
 				endwhile;
 			endif;
 		}
-
 		// $api_url 		= str_replace('ophim.tv', 'ophim1.com', $url);
 		$sourcePage = json_decode($source_url, true);
 		$data = create_data_nguonc($sourcePage, $url, $ophim_update_time, $filterType, $filterCategory, $filterCountry);
+
 		if ($data['crawl_filter']) {
 			$result = array(
 				'status' => false,
@@ -743,7 +759,9 @@ function crawl_ophim_movies_handle_nguonc($url, $ophim_update_time, $filterType,
 			'wait' => false,
 			'schedule_code' => SCHEDULE_CRAWLER_TYPE_ERROR
 		);
+
 		return json_encode($result);
+
 	}
 }
 function crawl_ophim_movies_handle_nguonc_custom($url, $filterType, $filterCategory, $filterCountry)
@@ -1204,6 +1222,7 @@ function create_data_nguonc($sourcePage, $url, $ophim_update_time, $filterType =
 		}
 		array_push($arrCat, $value["name"]);
 	}
+
 	if ($sourcePage["movie"]["chieurap"] == true) {
 		array_push($arrCat, "Chiếu Rạp");
 	}
@@ -1229,8 +1248,11 @@ function create_data_nguonc($sourcePage, $url, $ophim_update_time, $filterType =
 	array_push($arrTags, $sourcePage["movie"]["name"]);
 	if ($sourcePage["movie"]["name"] != $sourcePage["movie"]["original_name"])
 		array_push($arrTags, $sourcePage["movie"]["original_name"]);
+
 	$status = getStatusNguonc($sourcePage["movie"]["current_episode"]);
+
 	$content = sprintf('%s là một bộ phim %s  %s được sản xuất vào năm %s. %s', $sourcePage["movie"]["name"], $sourcePage["movie"]["category"]["2"]["list"][0]["name"], $sourcePage["movie"]["category"]["4"]["list"][0]["name"], $sourcePage["movie"]["category"]["3"]["list"][0]["name"], preg_replace('/\\r?\\n/s', '', $sourcePage["movie"]["description"]));
+
 	$schedule_list = json_decode(file_get_contents(MOVIE_SCHEDULE), true);
 	$show_time = $schedule_list[$sourcePage["movie"]["slug"]] ? $schedule_list[$sourcePage["movie"]["slug"]] : "";
 	if ($status == "ongoing") {
@@ -1255,8 +1277,8 @@ function create_data_nguonc($sourcePage, $url, $ophim_update_time, $filterType =
 		'tags' => $arrTags,
 		// 'content'   							=> preg_replace('/\\r?\\n/s', '', $sourcePage["movie"]["description"]),
 		'content' => $content,
-		'actor' => implode(',', $sourcePage["movie"]["casts"]),
-		'director' => implode(',', $sourcePage["movie"]["director"]),
+		'actor' => implode(',', (array) ($sourcePage["movie"]["casts"] ?? [])),
+		'director' => implode(',', (array) ($sourcePage["movie"]["director"] ?? [])),
 		'country' => $arrCountry,
 		'cat' => $arrCat,
 		'type' => $type,
@@ -1330,8 +1352,10 @@ function create_data_kkphim($sourcePage, $url, $kkphim_id, $kkphim_update_time, 
 		'fetch_ophim_update_time' => $kkphim_update_time,
 		'title' => $sourcePage["movie"]["name"],
 		'org_title' => $sourcePage["movie"]["origin_name"],
-		'thumbnail' => $sourcePage["movie"]["thumb_url"],
-		'poster' => $sourcePage["movie"]["poster_url"],
+		// Đảo ngược poster và thumb do lỗi ở api kkphim
+		'thumbnail' => $sourcePage["movie"]["poster_url"],
+		'poster' => $sourcePage["movie"]["thumb_url"],
+		// End
 		'trailer_url' => $sourcePage["movie"]["trailer_url"],
 		'episode' => $sourcePage["movie"]["episode_current"],
 		'total_episode' => $sourcePage["movie"]["episode_total"],
@@ -1502,7 +1526,47 @@ function add_posts($data)
 		'is_adult' => false,
 		'is_copyright' => false,
 	);
+	// test add showtime
+	global $wpdb;
+	$showtime_terms = explode(',', $data['showtime']); // ["Thứ 2", " Thứ 7"]
+	$showtime_terms = array_map('trim', $showtime_terms);
+	if (!empty($showtime_terms) && is_array($showtime_terms)) {
+		foreach ($showtime_terms as $time) {
+			$term = term_exists($time, 'showtimes');
+			if ($term) {
+				$term_taxonomy_id = $term['term_taxonomy_id'];
+				$exists = $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT object_id FROM {$wpdb->term_relationships} WHERE object_id = %d AND term_taxonomy_id = %d",
+						$post_id,
+						$term_taxonomy_id
+					)
+				);
+				if (!$exists) {
+					$wpdb->insert(
+						$wpdb->term_relationships,
+						[
+							'object_id' => $post_id,
+							'term_taxonomy_id' => $term_taxonomy_id,
+							'term_order' => 0
+						],
+						[
+							'%d',
+							'%d',
+							'%d'
+						]
+					);
+					$wpdb->query($wpdb->prepare(
+						"UPDATE {$wpdb->term_taxonomy} SET count = count + 1 WHERE term_taxonomy_id = %d",
+						$term_taxonomy_id
+					));
 
+				}
+
+			}
+		}
+	}
+	// End test
 	$default_episode = array();
 	$ep_sv_add['halimmovies_server_name'] = "Server #1";
 	$ep_sv_add['halimmovies_server_data'] = array();

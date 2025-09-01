@@ -10,15 +10,18 @@ define('CRAWL_OPHIM_PATH_SOURCE_JSON', CRAWL_OPHIM_PATH . 'schedule_source.json'
 
 require_once CRAWL_OPHIM_PATH . 'constant.php';
 
-if (!isset($argv[1])) return;
-if ($argv[1] != get_option(CRAWL_OPHIM_OPTION_SECRET_KEY, 'secret_key')) return;
+if (!isset($argv[1]))
+	return;
+if ($argv[1] != get_option(CRAWL_OPHIM_OPTION_SECRET_KEY, 'secret_key'))
+	return;
 
 require_once CRAWL_OPHIM_PATH . 'functions.php';
 require_once CRAWL_OPHIM_PATH . 'crawl_function.php';
 
 // Get & Check Settings
-$crawl_ophim_settings = json_decode(get_option(CRAWL_OPHIM_OPTION_SETTINGS, false));
-if (!$crawl_ophim_settings) return;
+$crawl_ophim_settings = json_decode((string) get_option(CRAWL_OPHIM_OPTION_SETTINGS, 'false'));
+if (!$crawl_ophim_settings)
+	return;
 
 // Check enable
 if (getEnable() === false) {
@@ -26,7 +29,8 @@ if (getEnable() === false) {
 	return;
 }
 // Check running
-if ((int) get_option(CRAWL_OPHIM_OPTION_RUNNING, 0) === 1) return;
+if ((int) get_option(CRAWL_OPHIM_OPTION_RUNNING, 0) === 1)
+	return;
 
 // Update Running
 update_option(CRAWL_OPHIM_OPTION_RUNNING, 1);
@@ -52,40 +56,41 @@ function Crawl_Custom($crawl_ophim_settings)
 	$listUpdate = array();
 	try {
 		//get list movies from schedule_source.json
-		
+
 		$listSource = json_decode(file_get_contents(MOVIE_SCHEDULE), true);
 		$listMovies = array();
 		$countMovies = count($listSource);
 		$countDone = 0;
 		$countStatus = array(0, 0, 0, 0, 0);
-		
+
 		write_log("Start crawl $countMovies custom movies");
-		foreach ($listSource as $source => $value){
-			$url = API_NGUONC."/api/film/". $source;
+		foreach ($listSource as $source => $value) {
+			$url = API_NGUONC . "/api/film/" . $source;
 			$res = crawl_ophim_movies_handle_nguonc_custom($url, $crawl_ophim_settings->filterType, $crawl_ophim_settings->filterCategory, $crawl_ophim_settings->filterCountry);
 			$result = json_decode($res);
-			if ($result->schedule_code == SCHEDULE_CRAWLER_TYPE_ERROR) write_log(sprintf("ERROR: %s ==>>> %s", $url, $result->msg));
+			if ($result->schedule_code == SCHEDULE_CRAWLER_TYPE_ERROR)
+				write_log(sprintf("ERROR: %s ==>>> %s", $url, $result->msg));
 			if ($result->schedule_code == SCHEDULE_CRAWLER_TYPE_UPDATE) {
 				$listUpdate[] = $result->name;
 			}
 			$countStatus[$result->schedule_code]++;
 			$countDone++;
 		}
-		
-		
+
+
 	} catch (\Throwable $th) {
 		write_log(sprintf("ERROR: THROW ==>>> %s", $th->getMessage()));
 	}
 	if (count($listUpdate) > 0) {
 		write_log("List update: " . implode("\n", $listUpdate));
 		$notify = "List update: " . implode("\n", $listUpdate);
-		sendNotifiTelegram($notify);
+		// sendNotifiTelegram($notify);
 	}
 	update_option(CRAWL_OPHIM_OPTION_RUNNING, 0);
 
 	write_log("Done {$countDone}/{$countMovies} movies (Nothing Update: {$countStatus[0]} | Insert: {$countStatus[1]} | Update: {$countStatus[2]} | Error: {$countStatus[3]} | Filter: {$countStatus[4]})");
-	$notify ="Done {$countDone}/{$countMovies} movies custom: \n Nothing Update: {$countStatus[0]} \n Insert: {$countStatus[1]} \n Update: {$countStatus[2]} \n Error: {$countStatus[3]} \n Filter: {$countStatus[4]} \n List Update: " . implode("\n", $listUpdate?:"");
-	sendNotifiTelegram($notify);
+	$notify = "Done {$countDone}/{$countMovies} movies custom: \n Nothing Update: {$countStatus[0]} \n Insert: {$countStatus[1]} \n Update: {$countStatus[2]} \n Error: {$countStatus[3]} \n Filter: {$countStatus[4]} \n List Update: " . implode("\n", $listUpdate ?: "");
+	// sendNotifiTelegram($notify);
 
 }
 function Crawl_Nguonc($crawl_ophim_settings)
@@ -120,12 +125,13 @@ function Crawl_Nguonc($crawl_ophim_settings)
 				return;
 			}
 
-			$url 								= explode('|', $data_post)[0];
+			$url = explode('|', $data_post)[0];
 			// $ophim_id 					= explode('|', $data_post)[1];
-			$ophim_update_time 	= explode('|', $data_post)[1];
+			$ophim_update_time = explode('|', $data_post)[1];
 			$result = crawl_ophim_movies_handle_nguonc($url, $ophim_update_time, $crawl_ophim_settings->filterType, $crawl_ophim_settings->filterCategory, $crawl_ophim_settings->filterCountry);
 			$result = json_decode($result);
-			if ($result->schedule_code == SCHEDULE_CRAWLER_TYPE_ERROR) write_log(sprintf("ERROR: %s ==>>> %s", $url, $result->msg));
+			if ($result->schedule_code == SCHEDULE_CRAWLER_TYPE_ERROR)
+				write_log(sprintf("ERROR: %s ==>>> %s", $url, $result->msg));
 			$countStatus[$result->schedule_code]++;
 			$countDone++;
 		}
@@ -137,8 +143,8 @@ function Crawl_Nguonc($crawl_ophim_settings)
 	update_option(CRAWL_OPHIM_OPTION_RUNNING, 0);
 
 	write_log("Done {$countDone}/{$countMovies} movies (Nothing Update: {$countStatus[0]} | Insert: {$countStatus[1]} | Update: {$countStatus[2]} | Error: {$countStatus[3]} | Filter: {$countStatus[4]})");
-	$notify ="Done {$countDone}/{$countMovies} movies nguonc: \n Nothing Update: {$countStatus[0]} \n Insert: {$countStatus[1]} \n Update: {$countStatus[2]} \n Error: {$countStatus[3]} \n Filter: {$countStatus[4]}";
-	sendNotifiTelegram($notify);
+	$notify = "Done {$countDone}/{$countMovies} movies nguonc: \n Nothing Update: {$countStatus[0]} \n Insert: {$countStatus[1]} \n Update: {$countStatus[2]} \n Error: {$countStatus[3]} \n Filter: {$countStatus[4]}";
+	// sendNotifiTelegram($notify);
 }
 function Crawl_KKPhim($crawl_ophim_settings)
 {
@@ -173,13 +179,14 @@ function Crawl_KKPhim($crawl_ophim_settings)
 				return;
 			}
 
-			$url 								= explode('|', $data_post)[0];
-			$kkphim_id 					= explode('|', $data_post)[1];
-			$kkphim_update_time 	= explode('|', $data_post)[2];
+			$url = explode('|', $data_post)[0];
+			$kkphim_id = explode('|', $data_post)[1];
+			$kkphim_update_time = explode('|', $data_post)[2];
 
 			$result = crawl_kkphim_movies_handle($url, $kkphim_id, $kkphim_update_time, $crawl_ophim_settings->filterType, $crawl_ophim_settings->filterCategory, $crawl_ophim_settings->filterCountry);
 			$result = json_decode($result);
-			if ($result->schedule_code == SCHEDULE_CRAWLER_TYPE_ERROR) write_log(sprintf("ERROR: %s ==>>> %s", $url, $result->msg));
+			if ($result->schedule_code == SCHEDULE_CRAWLER_TYPE_ERROR)
+				write_log(sprintf("ERROR: %s ==>>> %s", $url, $result->msg));
 			$countStatus[$result->schedule_code]++;
 			$countDone++;
 		}
@@ -191,8 +198,8 @@ function Crawl_KKPhim($crawl_ophim_settings)
 	update_option(CRAWL_OPHIM_OPTION_RUNNING, 0);
 
 	write_log("Done {$countDone}/{$countMovies} movies (Nothing Update: {$countStatus[0]} | Insert: {$countStatus[1]} | Update: {$countStatus[2]} | Error: {$countStatus[3]} | Filter: {$countStatus[4]})");
-	$notify ="Done {$countDone}/{$countMovies} movies kkphim: \n Nothing Update: {$countStatus[0]} \n Insert: {$countStatus[1]} \n Update: {$countStatus[2]} \n Error: {$countStatus[3]} \n Filter: {$countStatus[4]}";
-	sendNotifiTelegram($notify);
+	$notify = "Done {$countDone}/{$countMovies} movies kkphim: \n Nothing Update: {$countStatus[0]} \n Insert: {$countStatus[1]} \n Update: {$countStatus[2]} \n Error: {$countStatus[3]} \n Filter: {$countStatus[4]}";
+	// sendNotifiTelegram($notify);
 }
 function Crawl_OPhim($crawl_ophim_settings)
 {
@@ -227,13 +234,14 @@ function Crawl_OPhim($crawl_ophim_settings)
 				return;
 			}
 
-			$url 								= explode('|', $data_post)[0];
-			$ophim_id 					= explode('|', $data_post)[1];
-			$ophim_update_time 	= explode('|', $data_post)[2];
+			$url = explode('|', $data_post)[0];
+			$ophim_id = explode('|', $data_post)[1];
+			$ophim_update_time = explode('|', $data_post)[2];
 
 			$result = crawl_ophim_movies_handle($url, $ophim_id, $ophim_update_time, $crawl_ophim_settings->filterType, $crawl_ophim_settings->filterCategory, $crawl_ophim_settings->filterCountry);
 			$result = json_decode($result);
-			if ($result->schedule_code == SCHEDULE_CRAWLER_TYPE_ERROR) write_log(sprintf("ERROR: %s ==>>> %s", $url, $result->msg));
+			if ($result->schedule_code == SCHEDULE_CRAWLER_TYPE_ERROR)
+				write_log(sprintf("ERROR: %s ==>>> %s", $url, $result->msg));
 			$countStatus[$result->schedule_code]++;
 			$countDone++;
 		}
@@ -245,9 +253,9 @@ function Crawl_OPhim($crawl_ophim_settings)
 	update_option(CRAWL_OPHIM_OPTION_RUNNING, 0);
 
 	write_log("Done {$countDone}/{$countMovies} movies (Nothing Update: {$countStatus[0]} | Insert: {$countStatus[1]} | Update: {$countStatus[2]} | Error: {$countStatus[3]} | Filter: {$countStatus[4]})");
-	$notify ="Done {$countDone}/{$countMovies} movies ophim: \n Nothing Update: {$countStatus[0]} \n Insert: {$countStatus[1]} \n Update: {$countStatus[2]} \n Error: {$countStatus[3]} \n Filter: {$countStatus[4]}";
-	sendNotifiTelegram($notify);
-	
+	$notify = "Done {$countDone}/{$countMovies} movies ophim: \n Nothing Update: {$countStatus[0]} \n Insert: {$countStatus[1]} \n Update: {$countStatus[2]} \n Error: {$countStatus[3]} \n Filter: {$countStatus[4]}";
+	// sendNotifiTelegram($notify);
+
 }
 
 
@@ -276,7 +284,8 @@ function getEnableSource()
 		return 3;
 	} elseif ($source_phim->enable_custom) {
 		return 4;
-	} else return false;
+	} else
+		return false;
 }
 
 function write_log($log_msg, $new_line = "\n")
@@ -287,42 +296,4 @@ function write_log($log_msg, $new_line = "\n")
 	}
 	$log_file_data = $log_filename . '/log_' . date('d-m-Y') . '.log';
 	file_put_contents($log_file_data, '[' . date("d-m-Y H:i:s") . '] ' . $log_msg . $new_line, FILE_APPEND);
-}
-function sendNotifiTelegram($notify)
-{
-	$botToken = "7872689878:AAEKkbhnVAe7DR2-9vg5JgGknhH9ShXsWfQ"; // Token của bot
-	$chatId = "1997128476";     // ID chat
-	$message = "HH3DVIP Cập Nhật Phim Thành Công \n $notify"; // Nội dung tin nhắn
-
-	// URL gửi yêu cầu đến Telegram API
-	$url = "https://api.telegram.org/bot$botToken/sendMessage";
-
-	// Dữ liệu cần gửi
-	$data = [
-		'chat_id' => $chatId,
-		'text' => $message,
-	];
-
-	 // Chuyển dữ liệu thành JSON
-	 $options = [
-        'http' => [
-            'header'  => "Content-Type: application/json\r\n",
-            'method'  => 'POST',
-            'content' => json_encode($data),
-        ],
-    ];
-	$context = stream_context_create($options);
-    $response = file_get_contents($url, false, $context);
-
-	 // Kiểm tra kết quả
-	//  if ($response === FALSE) {
-    //     echo "Gửi tin nhắn thất bại.";
-    // } else {
-    //     $responseData = json_decode($response, true);
-    //     if ($responseData['ok']) {
-    //         echo "Tin nhắn đã được gửi!";
-    //     } else {
-    //         echo "Lỗi: " . $responseData['description'];
-    //     }
-    // }
 }

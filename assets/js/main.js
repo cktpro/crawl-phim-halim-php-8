@@ -404,7 +404,6 @@ jQuery(function ($) {
         $("input[name='filter_country[]']:checked").each(function () {
             inputFilterCountry.push($(this).val());
         });
-
         crawl_movies_nguonc(false);
     });
     // end button crawl movide nguonc
@@ -420,7 +419,6 @@ jQuery(function ($) {
         listLink = listLink.join('\n');
         textArealistMovies.val(listLink);
         divMsgText.html(`Crawl Movies: <b>${linkCurrent}</b>`);
-
         $.ajax({
             url: ajaxurl,
             type: 'POST',

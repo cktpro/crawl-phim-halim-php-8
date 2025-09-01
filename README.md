@@ -7,7 +7,8 @@
 <!-- ![Alt text](screenShort2.PNG?raw=true 'Image Demo') -->
 
 ## CHANGELOGS
-
+-   Update 29/8/2025
+    -   Cập nhật code cho php 8
 -   Update 25/8/2025
     -   Thêm chức năng resize ảnh,convert webp khi crawl
 -   Update 17/8/2025
